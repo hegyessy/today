@@ -1,0 +1,34 @@
+@import "tailwindcss";
+
+@layer components {
+    .day {
+        @apply border-1 border-transparent h-2 w-2 rounded-full bg-gray-300 p-1;
+        box-shadow: inset 0 1px 1px rgba(0 0 0 / 0.2);
+    }
+
+    @media (prefers-color-scheme: dark) {
+        .day {
+            @apply bg-gray-950;
+            box-shadow:
+                0px 1px 1px rgba(255 255 255 / 0.2),
+                inset 0 1px 1px black;
+        }
+        .day.completed {
+            @apply bg-blue-50 border-gray-800;
+            box-shadow: 0 0 12px rgba(255 255 255 / 0.4);
+        }
+    }
+
+    .day.completed {
+        @apply border-1 border-blue-200 bg-blue-400;
+        box-shadow: 0 0 8px rgba(96 165 250 / 0.5);
+    }
+
+    .day.today {
+        @apply animate-pulse bg-orange-500 shadow-none;
+    }
+
+    .month {
+        @apply grid grid-cols-30 gap-2 flex-wrap w-92;
+    }
+}
