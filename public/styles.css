@@ -137,6 +137,10 @@ body::after {
         box-shadow: none;
     }
 }
+@keyframes shimmer-pulse {
+    0%, 100% { opacity: 0; transform: scale(0.4); }
+    50%       { opacity: 1; transform: scale(1.6); }
+}
 @keyframes completed-glow {
     0%,
     100% {
@@ -154,6 +158,33 @@ body::after {
 }
 
 /* Day grid cells */
+.day.completed,
+.day.today {
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.1s ease-out;
+}
+.day.completed:is(:hover, :active),
+.day.today:is(:hover, :active) {
+    transform: scale(1.5);
+    z-index: 2;
+}
+.day.completed:is(:hover, :active)::after,
+.day.today:is(:hover, :active)::after {
+    content: "";
+    position: absolute;
+    inset: -8px;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: shimmer-pulse 0.6s ease-in-out infinite;
+}
+.day.completed:is(:hover, :active)::after {
+    background: radial-gradient(circle, rgba(0, 245, 255, 0.8) 0%, transparent 65%);
+}
+.day.today:is(:hover, :active)::after {
+    background: radial-gradient(circle, rgba(255, 0, 128, 0.8) 0%, transparent 65%);
+}
+
 .day {
     display: block;
     height: 0.75rem;
