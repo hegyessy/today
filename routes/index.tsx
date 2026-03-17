@@ -21,6 +21,8 @@ const MONTHS = [
   { name: "Dec", days: 31 },
 ];
 
+const JP_MONTHS = ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"];
+
 function ordinal(n: number): string {
   const s = ["th", "st", "nd", "rd"];
   const v = n % 100;
@@ -64,29 +66,38 @@ export default define.page(function Home(ctx) {
   const progress = (dayOfYear / totalDays) * 100;
 
   return (
-    <div class="font-mono min-h-screen w-screen bg-gray-100 dark:bg-gray-800 pb-20 p-12 flex flex-col justify-start items-center gap-4">
+    <div class="min-h-screen w-screen pb-20 p-8 flex flex-col justify-start items-center gap-6">
       <Head>
         <title>Today</title>
       </Head>
-      <h1 class="text-gray-900 dark:text-white">{formatDate(now)}</h1>
+      <div class="marquee-track w-full max-w-2xl">
+        <span class="marquee-content">
+          ★ がんばって！ ★ 今日も最高！ ★ 一日一日を大切に ★ 諦めないで ★ 夢を追いかけろ ★ 頑張れ！ ★ がんばって！ ★
+        </span>
+      </div>
+      <h1 class="heading-pixel">{formatDate(now)}</h1>
+      <div class="flex gap-4">
+        <span class="deco-scatter">★</span>
+        <span class="deco-scatter" style="color:#FFE600;text-shadow:0 0 8px #FFE600">✿</span>
+        <span class="deco-scatter">★</span>
+        <span class="deco-scatter" style="color:#00F5FF;text-shadow:0 0 8px #00F5FF">✦</span>
+        <span class="deco-scatter">★</span>
+      </div>
       <div class="flex flex-row items-start gap-6">
-        <ol class="text-gray-400 font-mono text-xs grid grid-cols-3 gap-2">
+        <ol class="month-list">
           {MONTHS.map((month, monthIndex) => (
-            <li
-              key={month.name}
-              class={
-                monthIndex === currentMonth
-                  ? "text-orange-500"
-                  : monthIndex < currentMonth
-                    ? "text-gray-800 dark:text-white"
-                    : ""
-              }
-            >
-              {month.name}
+            <li key={month.name} class={
+              monthIndex === currentMonth ? "month-item-current"
+              : monthIndex < currentMonth ? "month-item-past"
+              : "month-item-future"
+            }>
+              {month.name} {JP_MONTHS[monthIndex]}
             </li>
           ))}
         </ol>
-        <Clock />
+        <div class="clock-panel">
+          <Clock />
+        </div>
       </div>
 
       <ol class="month">
@@ -94,18 +105,13 @@ export default define.page(function Home(ctx) {
           <Day key={i} {...day} />
         ))}
       </ol>
-      <footer class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 dark:bg-gray-900 dark:border-transparent px-6 py-3 flex flex-col gap-2">
-        <div class="flex justify-between text-xs text-gray-400">
-          <span>
-            Day {dayOfYear} of {totalDays}
-          </span>
+      <footer class="neon-footer">
+        <div class="neon-footer-labels">
+          <span>DAY {dayOfYear} / {totalDays}</span>
           <span>{Math.round(progress)}%</span>
         </div>
-        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
-          <div
-            class="bg-orange-500 h-1.5 rounded-full"
-            style={`width: ${progress}%`}
-          ></div>
+        <div class="neon-progress-track">
+          <div class="neon-progress-fill" style={`width: ${progress}%`}></div>
         </div>
       </footer>
     </div>
