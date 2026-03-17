@@ -1,34 +1,190 @@
 @import "tailwindcss";
 
+@theme {
+  --color-neon-pink:   #FF0080;
+  --color-neon-cyan:   #00F5FF;
+  --color-neon-yellow: #FFE600;
+  --color-neon-purple: #BF00FF;
+  --color-void:        #06001A;
+  --font-pixel: "Press Start 2P", monospace;
+}
+
+@layer base {
+  body {
+    background-color: #06001A;
+    color: #e0e0ff;
+    font-family: "Courier New", monospace;
+    background-image:
+      linear-gradient(rgba(0,245,255,0.07) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,245,255,0.07) 1px, transparent 1px);
+    background-size: 40px 40px;
+    min-height: 100vh;
+  }
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9999;
+    background: repeating-linear-gradient(
+      0deg, transparent, transparent 2px,
+      rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px
+    );
+  }
+}
+
+@layer base {
+  @keyframes marquee {
+    0%   { transform: translateX(100vw); }
+    100% { transform: translateX(-100%); }
+  }
+  @keyframes neon-pulse {
+    0%, 100% { box-shadow: 0 0 4px #FF0080, 0 0 8px #FF0080, 0 0 16px #FF0080; }
+    50%       { box-shadow: 0 0 8px #FF0080, 0 0 20px #FF0080, 0 0 40px #FF0080, 0 0 60px rgba(255,0,128,0.4); }
+  }
+  @keyframes progress-shimmer {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  @keyframes flicker {
+    0%, 95%, 100% { opacity: 1; }
+    96% { opacity: 0.85; }
+    97% { opacity: 1; }
+    98% { opacity: 0.7; }
+  }
+}
+
 @layer components {
-    .day {
-        @apply border-1 border-transparent h-2 w-2 rounded-full bg-gray-300 p-1;
-        box-shadow: inset 0 1px 1px rgba(0 0 0 / 0.2);
-    }
+  /* Day grid cells */
+  .day {
+    display: block;
+    height: 0.5rem;
+    width: 0.5rem;
+    border-radius: 2px;
+    background-color: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: inset 0 1px 1px rgba(0,0,0,0.5);
+  }
+  .day.completed {
+    background-color: #00F5FF;
+    border-color: #00F5FF;
+    box-shadow: 0 0 4px #00F5FF, 0 0 10px rgba(0,245,255,0.6), 0 0 20px rgba(0,245,255,0.3);
+  }
+  .day.today {
+    background-color: #FF0080;
+    border-color: #FF0080;
+    animation: neon-pulse 1.4s ease-in-out infinite;
+  }
 
-    @media (prefers-color-scheme: dark) {
-        .day {
-            @apply bg-gray-950;
-            box-shadow:
-                0px 1px 1px rgba(255 255 255 / 0.2),
-                inset 0 1px 1px black;
-        }
-        .day.completed {
-            @apply bg-blue-50 border-gray-800;
-            box-shadow: 0 0 12px rgba(255 255 255 / 0.4);
-        }
-    }
+  /* Day grid container */
+  .month {
+    display: grid;
+    grid-template-columns: repeat(30, minmax(0, 1fr));
+    gap: 0.5rem;
+    width: 23rem;
+    padding: 1rem;
+    border: 1px solid rgba(0,245,255,0.3);
+    border-radius: 4px;
+    box-shadow: 0 0 15px rgba(0,245,255,0.1), inset 0 0 30px rgba(0,0,0,0.3);
+  }
 
-    .day.completed {
-        @apply border-1 border-blue-200 bg-blue-400;
-        box-shadow: 0 0 8px rgba(96 165 250 / 0.5);
-    }
+  /* Pixel heading */
+  .heading-pixel {
+    font-family: "Press Start 2P", monospace;
+    font-size: 0.7rem;
+    line-height: 1.8;
+    color: #00F5FF;
+    text-shadow: 0 0 8px #00F5FF, 0 0 20px rgba(0,245,255,0.5);
+    letter-spacing: 0.05em;
+  }
 
-    .day.today {
-        @apply animate-pulse bg-orange-500 shadow-none;
-    }
+  /* Scrolling marquee */
+  .marquee-track {
+    overflow: hidden;
+    white-space: nowrap;
+    width: 100%;
+    position: relative;
+  }
+  .marquee-content {
+    display: inline-block;
+    animation: marquee 20s linear infinite;
+    color: #FFE600;
+    font-family: "Press Start 2P", monospace;
+    font-size: 0.5rem;
+    letter-spacing: 0.1em;
+    text-shadow: 0 0 6px #FFE600, 0 0 12px rgba(255,230,0,0.5);
+  }
 
-    .month {
-        @apply grid grid-cols-30 gap-2 flex-wrap w-92;
-    }
+  /* Month list panel */
+  .month-list {
+    font-family: "Courier New", monospace;
+    font-size: 0.65rem;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+    padding: 0.75rem;
+    border: 1px solid rgba(191,0,255,0.3);
+    border-radius: 4px;
+    box-shadow: 0 0 12px rgba(191,0,255,0.1), inset 0 0 20px rgba(0,0,0,0.3);
+  }
+  .month-item-past    { color: #00F5FF; text-shadow: 0 0 4px rgba(0,245,255,0.6); }
+  .month-item-current { color: #FF0080; text-shadow: 0 0 6px #FF0080, 0 0 12px rgba(255,0,128,0.4); animation: flicker 5s infinite; }
+  .month-item-future  { color: rgba(255,255,255,0.2); }
+
+  /* Clock glow ring */
+  .clock-panel {
+    padding: 0.5rem;
+    border: 1px solid rgba(255,0,128,0.3);
+    border-radius: 50%;
+    box-shadow: 0 0 12px rgba(255,0,128,0.2), 0 0 30px rgba(255,0,128,0.08), inset 0 0 15px rgba(0,0,0,0.5);
+  }
+
+  /* Decorative scatter characters */
+  .deco-scatter {
+    pointer-events: none;
+    user-select: none;
+    color: #FF0080;
+    text-shadow: 0 0 8px #FF0080;
+    font-size: 0.6rem;
+    opacity: 0.7;
+  }
+
+  /* Footer */
+  .neon-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: rgba(6,0,26,0.92);
+    border-top: 1px solid rgba(0,245,255,0.25);
+    backdrop-filter: blur(8px);
+    padding: 0.75rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    box-shadow: 0 -4px 20px rgba(0,245,255,0.08);
+  }
+  .neon-footer-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.65rem;
+    color: rgba(0,245,255,0.6);
+    font-family: "Courier New", monospace;
+  }
+  .neon-progress-track {
+    width: 100%;
+    height: 4px;
+    background-color: rgba(255,255,255,0.08);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .neon-progress-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, #FF0080, #00F5FF, #BF00FF, #FF0080);
+    background-size: 200% 100%;
+    animation: progress-shimmer 3s ease-in-out infinite;
+    box-shadow: 0 0 8px #FF0080, 0 0 16px rgba(0,245,255,0.4);
+  }
 }
