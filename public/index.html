@@ -97,6 +97,29 @@
         }
       }
 
+      // --- audio ---
+      let audioCtx = null;
+
+      // C pentatonic major across 4 octaves (C3–A6): 20 distinct tones
+      const SCALE = (() => {
+        const base = [130.81, 146.83, 164.81, 196.00, 220.00]; // C D E G A at C3
+        return [0, 1, 2, 3].flatMap(oct => base.map(f => f * 2 ** oct));
+      })();
+
+      function playTone(freq) {
+        audioCtx ??= new AudioContext();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.frequency.value = freq;
+        const t = audioCtx.currentTime;
+        gain.gain.setValueAtTime(0.25, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+        osc.start(t);
+        osc.stop(t + 0.35);
+      }
+
       // --- today-year-grid ---
       const JP_MONTHS = [
         "一月", "二月", "三月", "四月", "五月", "六月",
@@ -124,6 +147,7 @@
           const grid = document.createElement("div");
           grid.className = "year-grid";
 
+          let doy = 0;
           months.forEach((month, monthIndex) => {
             const isPast = monthIndex < currentMonth;
             const isCurrent = monthIndex === currentMonth;
@@ -151,6 +175,13 @@
               const li = document.createElement("li");
               li.className = "day" + (isToday ? " today" : completed ? " completed" : "");
               li.style.setProperty("--d", `${delay}ms`);
+
+              if (isToday || completed) {
+                const freq = SCALE[doy % SCALE.length];
+                li.addEventListener("click", () => playTone(freq));
+              }
+
+              doy++;
               daysList.appendChild(li);
             }
 
