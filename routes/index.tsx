@@ -2,6 +2,7 @@ import { Head } from "fresh/runtime";
 import { define } from "../utils.ts";
 import { Day } from "../components/Day.tsx";
 import Clock from "../islands/Clock.tsx";
+import Phrase from "../islands/Phrase.tsx";
 
 const year = new Date().getFullYear();
 const isLeap = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
@@ -21,7 +22,20 @@ const MONTHS = [
   { name: "Dec", days: 31 },
 ];
 
-const JP_MONTHS = ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"];
+const JP_MONTHS = [
+  "一月",
+  "二月",
+  "三月",
+  "四月",
+  "五月",
+  "六月",
+  "七月",
+  "八月",
+  "九月",
+  "十月",
+  "十一月",
+  "十二月",
+];
 
 function ordinal(n: number): string {
   const s = ["th", "st", "nd", "rd"];
@@ -45,75 +59,49 @@ export default define.page(function Home(ctx) {
   const currentMonth = now.getMonth();
   const currentDay = now.getDate();
 
-  const dayOfYear =
-    MONTHS.slice(0, currentMonth).reduce((sum, m) => sum + m.days, 0) +
-    currentDay;
-  const totalDays = isLeap ? 366 : 365;
-
-  const allDays = MONTHS.flatMap((month, monthIndex) =>
-    Array.from({ length: month.days }, (_, dayIndex) => {
-      const dayNumber = dayIndex + 1;
-      const isCurrentMonth = monthIndex === currentMonth;
-      const isCompletedMonth = monthIndex < currentMonth;
-      return {
-        today: isCurrentMonth && dayNumber === currentDay,
-        completed:
-          isCompletedMonth || (isCurrentMonth && dayNumber < currentDay),
-      };
-    }),
-  );
-
-  const progress = (dayOfYear / totalDays) * 100;
-
   return (
-    <div class="min-h-screen w-screen pb-20 p-8 flex flex-col justify-start items-center gap-6">
+    <div class="min-h-screen w-screen p-8 flex flex-col justify-start items-center gap-4">
       <Head>
         <title>Today</title>
       </Head>
-      <div class="marquee-track w-full max-w-2xl">
-        <span class="marquee-content">
-          ★ がんばって！ ★ 今日も最高！ ★ 一日一日を大切に ★ 諦めないで ★ 夢を追いかけろ ★ 頑張れ！ ★ がんばって！ ★
-        </span>
-      </div>
-      <h1 class="heading-pixel">{formatDate(now)}</h1>
-      <div class="flex gap-4">
-        <span class="deco-scatter">★</span>
-        <span class="deco-scatter" style="color:#FFE600;text-shadow:0 0 8px #FFE600">✿</span>
-        <span class="deco-scatter">★</span>
-        <span class="deco-scatter" style="color:#00F5FF;text-shadow:0 0 8px #00F5FF">✦</span>
-        <span class="deco-scatter">★</span>
-      </div>
-      <div class="flex flex-row items-start gap-6">
-        <ol class="month-list">
-          {MONTHS.map((month, monthIndex) => (
-            <li key={month.name} class={
-              monthIndex === currentMonth ? "month-item-current"
-              : monthIndex < currentMonth ? "month-item-past"
-              : "month-item-future"
-            }>
-              {month.name} {JP_MONTHS[monthIndex]}
-            </li>
-          ))}
-        </ol>
+      {/* Fixed background cell grid */}
+      <div class="relative z-10 w-full flex flex-col items-center gap-6">
+        <Phrase />
+
         <div class="clock-panel">
           <Clock />
         </div>
-      </div>
+        <h1 class="heading-pixel">{formatDate(now)}</h1>
 
-      <ol class="month">
-        {allDays.map((day, i) => (
-          <Day key={i} {...day} />
-        ))}
-      </ol>
-      <footer class="neon-footer">
-        <div class="neon-footer-labels">
-          <span>DAY {dayOfYear} / {totalDays}</span>
-          <span>{Math.round(progress)}%</span>
+        <div class="year-grid">
+          {MONTHS.map((month, monthIndex) => {
+            const isPast = monthIndex < currentMonth;
+            const isCurrent = monthIndex === currentMonth;
+            const days = Array.from({ length: month.days }, (_, dayIndex) => {
+              const dayNumber = dayIndex + 1;
+              return {
+                today: isCurrent && dayNumber === currentDay,
+                completed: isPast || (isCurrent && dayNumber < currentDay),
+                delay: monthIndex * 80 + dayIndex * 25,
+              };
+            });
+            return (
+              <div class="month-col" key={month.name}>
+                <div
+                  class={`month-col-label ${isCurrent ? "month-col-label--current" : isPast ? "month-col-label--past" : "month-col-label--future"}`}
+                >
+                  {JP_MONTHS[monthIndex]}
+                </div>
+                <ol class="month-col-days">
+                  {days.map((day, i) => (
+                    <Day key={i} {...day} />
+                  ))}
+                </ol>
+              </div>
+            );
+          })}
         </div>
-        <div class="neon-progress-track">
-          <div class="neon-progress-fill" style={`width: ${progress}%`}></div>
-        </div>
-      </footer>
+      </div>
     </div>
   );
 });
