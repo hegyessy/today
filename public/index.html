@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>today</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page">
+      <today-phrase></today-phrase>
+      <div class="clock-panel">
+        <today-clock></today-clock>
+      </div>
+      <today-date></today-date>
+      <today-year-grid></today-year-grid>
+    </div>
+
+    <script type="module">
+      // --- today-phrase ---
+      const PHRASES = [
+        "がんばって！",
+        "今日も最高！",
+        "一日一日を大切に",
+        "諦めないで",
+        "夢を追いかけろ",
+        "頑張れ！",
+        "できる！",
+        "前に進め",
+      ];
+
+      class TodayPhrase extends HTMLElement {
+        #index = 0;
+
+        connectedCallback() {
+          this.className = "phrase-display";
+          this.textContent = PHRASES[this.#index];
+          this.addEventListener("animationiteration", () => {
+            let next;
+            do {
+              next = Math.floor(Math.random() * PHRASES.length);
+            } while (next === this.#index);
+            this.#index = next;
+            this.textContent = PHRASES[this.#index];
+          });
+        }
+      }
+
+      // --- today-clock ---
+      class TodayClock extends HTMLElement {
+        #intervalId = null;
+
+        connectedCallback() {
+          this.className = "casio-time";
+          this.#tick();
+          this.#intervalId = setInterval(() => this.#tick(), 1000);
+        }
+
+        disconnectedCallback() {
+          clearInterval(this.#intervalId);
+        }
+
+        #tick() {
+          const now = new Date();
+          const h = String(now.getHours()).padStart(2, "0");
+          const m = String(now.getMinutes()).padStart(2, "0");
+          const s = String(now.getSeconds()).padStart(2, "0");
+          this.textContent = `${h}:${m}:${s}`;
+        }
+      }
+
+      // --- today-date ---
+      function ordinal(n) {
+        const s = ["th", "st", "nd", "rd"];
+        const v = n % 100;
+        return n + (s[(v - 20) % 10] ?? s[v] ?? s[0]);
+      }
+
+      function formatDate(date) {
+        const parts = new Intl.DateTimeFormat("en-GB", {
+          weekday: "long",
+          month: "long",
+        }).formatToParts(date);
+        const get = (type) => parts.find((p) => p.type === type)?.value ?? "";
+        return `${get("weekday")} ${ordinal(date.getDate())}, ${get("month")} ${date.getFullYear()}`;
+      }
+
+      class TodayDate extends HTMLElement {
+        connectedCallback() {
+          const h1 = document.createElement("h1");
+          h1.className = "heading-pixel";
+          h1.textContent = formatDate(new Date());
+          this.appendChild(h1);
+        }
+      }
+
+      // --- today-year-grid ---
+      const JP_MONTHS = [
+        "一月", "二月", "三月", "四月", "五月", "六月",
+        "七月", "八月", "九月", "十月", "十一月", "十二月",
+      ];
+
+      function getMonths(year) {
+        const isLeap = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+        return [
+          { days: 31 }, { days: isLeap ? 29 : 28 }, { days: 31 },
+          { days: 30 }, { days: 31 }, { days: 30 },
+          { days: 31 }, { days: 31 }, { days: 30 },
+          { days: 31 }, { days: 30 }, { days: 31 },
+        ];
+      }
+
+      class TodayYearGrid extends HTMLElement {
+        connectedCallback() {
+          const now = new Date();
+          const year = now.getFullYear();
+          const currentMonth = now.getMonth();
+          const currentDay = now.getDate();
+          const months = getMonths(year);
+
+          const grid = document.createElement("div");
+          grid.className = "year-grid";
+
+          months.forEach((month, monthIndex) => {
+            const isPast = monthIndex < currentMonth;
+            const isCurrent = monthIndex === currentMonth;
+
+            const col = document.createElement("div");
+            col.className = "month-col";
+
+            const label = document.createElement("div");
+            label.className = "month-col-label " + (
+              isCurrent ? "month-col-label--current"
+              : isPast   ? "month-col-label--past"
+                         : "month-col-label--future"
+            );
+            label.textContent = JP_MONTHS[monthIndex];
+            col.appendChild(label);
+
+            const daysList = document.createElement("ol");
+            daysList.className = "month-col-days";
+
+            for (let d = 1; d <= month.days; d++) {
+              const isToday = isCurrent && d === currentDay;
+              const completed = isPast || (isCurrent && d < currentDay);
+              const delay = monthIndex * 80 + (d - 1) * 25;
+
+              const li = document.createElement("li");
+              li.className = "day" + (isToday ? " today" : completed ? " completed" : "");
+              li.style.setProperty("--d", `${delay}ms`);
+              daysList.appendChild(li);
+            }
+
+            col.appendChild(daysList);
+            grid.appendChild(col);
+          });
+
+          this.appendChild(grid);
+        }
+      }
+
+      customElements.define("today-phrase", TodayPhrase);
+      customElements.define("today-clock", TodayClock);
+      customElements.define("today-date", TodayDate);
+      customElements.define("today-year-grid", TodayYearGrid);
+    </script>
+  </body>
+</html>
