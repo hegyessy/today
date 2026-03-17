@@ -60,12 +60,12 @@ export default define.page(function Home(ctx) {
   const currentDay = now.getDate();
 
   return (
-    <div class="min-h-screen w-screen p-8 flex flex-col justify-start items-center gap-4">
+    <div class="min-h-screen w-screen p-4 flex flex-col justify-start items-center gap-2">
       <Head>
         <title>Today</title>
       </Head>
       {/* Fixed background cell grid */}
-      <div class="relative z-10 w-full flex flex-col items-center gap-6">
+      <div class="relative z-10 w-full flex flex-col items-center gap-2">
         <Phrase />
 
         <div class="clock-panel">
