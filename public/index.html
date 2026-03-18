@@ -120,6 +120,42 @@
         osc.stop(t + 0.35);
       }
 
+      // Chiptune jingle played when today's cell is clicked.
+      // Each entry: [SCALE index, beat offset, beat duration]. BPM = 200.
+      const SONG = [
+        // phrase 1 — ascending run
+        [5,  0.00, 1], [7,  0.25, 1], [8,  0.50, 1], [9,  0.75, 1],
+        // phrase 2 — peak and settle
+        [10, 1.00, 1], [9,  1.25, 1], [8,  1.50, 2],
+        // phrase 3 — lower call
+        [5,  2.25, 1], [7,  2.50, 1], [9,  2.75, 1], [11, 3.00, 1],
+        // finale — held resolution
+        [10, 3.25, 1], [9,  3.50, 1], [10, 3.75, 4],
+      ];
+      const BEAT = 60 / 200; // seconds per beat
+      let songEndTime = 0;
+
+      function playSong() {
+        audioCtx ??= new AudioContext();
+        const t = audioCtx.currentTime;
+        if (t < songEndTime) return; // ignore if already playing
+        SONG.forEach(([idx, offset, dur]) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.type = "square";
+          osc.frequency.value = SCALE[idx];
+          const start = t + offset * BEAT;
+          const end   = start + dur * BEAT * 0.85; // small gap between notes
+          gain.gain.setValueAtTime(0.12, start);
+          gain.gain.exponentialRampToValueAtTime(0.001, end);
+          osc.start(start);
+          osc.stop(end);
+        });
+        songEndTime = t + (3.75 + 4) * BEAT;
+      }
+
       // --- today-year-grid ---
       const JP_MONTHS = [
         "一月", "二月", "三月", "四月", "五月", "六月",
@@ -176,7 +212,9 @@
               li.className = "day" + (isToday ? " today" : completed ? " completed" : "");
               li.style.setProperty("--d", `${delay}ms`);
 
-              if (isToday || completed) {
+              if (isToday) {
+                li.addEventListener("click", playSong);
+              } else if (completed) {
                 const freq = SCALE[doy % SCALE.length];
                 li.addEventListener("click", () => playTone(freq));
               }
