@@ -1,0 +1,310 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --text-muted: #767676;
+  --accent: #e85d00;
+  --border: #d0d0d0;
+  --track: #e8e8e8;
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  padding: 24px 32px;
+  border-bottom: 1px solid var(--border);
+}
+
+.app-title {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+main {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 48px 24px;
+  min-height: calc(100vh - 73px);
+}
+
+/* flash-deck */
+flash-deck {
+  display: block;
+  width: 100%;
+  max-width: 480px;
+}
+
+.deck-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.category-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.score {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.score span {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* Progress bar */
+.progress-bar {
+  height: 3px;
+  background: var(--track);
+  margin-bottom: 40px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.2s ease;
+}
+
+/* Card */
+.card-wrapper {
+  perspective: 800px;
+  margin-bottom: 32px;
+  cursor: pointer;
+}
+
+flash-card {
+  display: block;
+}
+
+.card-inner {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3/2;
+  transform-style: preserve-3d;
+  transition: transform 0.35s ease;
+}
+
+.card-inner.flipped {
+  transform: rotateY(180deg);
+}
+
+.card-face {
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--bg);
+}
+
+.card-face.back {
+  transform: rotateY(180deg);
+}
+
+.card-kana {
+  font-size: 6rem;
+  font-weight: 300;
+  line-height: 1;
+  color: var(--text);
+  user-select: none;
+}
+
+.card-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.card-romaji {
+  font-size: 2.5rem;
+  font-weight: 300;
+  color: var(--accent);
+  letter-spacing: 0.05em;
+  user-select: none;
+}
+
+.card-group {
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* Mark buttons (shown after flip) */
+.mark-buttons {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 32px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.mark-buttons.visible {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.btn-mark {
+  flex: 1;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.btn-mark:hover {
+  border-color: var(--text);
+}
+
+.btn-mark.know:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Nav controls */
+.deck-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.btn-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0;
+  border: none;
+  background: none;
+  font-family: var(--font);
+  font-size: 13px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.btn-nav:hover:not(:disabled) {
+  color: var(--text);
+}
+
+.btn-nav:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.btn-shuffle {
+  padding: 8px 0;
+  border: none;
+  background: none;
+  font-family: var(--font);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.btn-shuffle:hover {
+  color: var(--text);
+}
+
+.btn-shuffle.active {
+  color: var(--accent);
+}
+
+.card-counter {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* Summary screen */
+.summary {
+  display: none;
+  text-align: center;
+  padding: 48px 0;
+}
+
+.summary.visible {
+  display: block;
+}
+
+.summary h2 {
+  font-size: 1.25rem;
+  font-weight: 400;
+  margin-bottom: 8px;
+}
+
+.summary-score {
+  font-size: 3rem;
+  font-weight: 300;
+  color: var(--accent);
+  margin: 24px 0;
+  line-height: 1;
+}
+
+.summary-label {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 32px;
+}
+
+.btn-restart {
+  padding: 12px 32px;
+  border: 1px solid var(--text);
+  border-radius: 4px;
+  background: none;
+  font-family: var(--font);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.btn-restart:hover {
+  background: var(--text);
+  color: var(--bg);
+}
+
+/* deck + summary visibility toggling */
+.deck-view.hidden {
+  display: none;
+}
