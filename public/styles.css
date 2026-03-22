@@ -187,8 +187,8 @@ body::after {
 
 .day {
     display: block;
-    height: 0.75rem;
-    width: 0.75rem;
+    height: 11px;
+    width: 11px;
     border-radius: 2px;
     background-color: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 255, 255, 0.08);
