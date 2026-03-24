@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3D Surface Component</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              scene: {
+                base: '#0a0a0f',
+                '0': '#16161e',
+                '1': '#1c1c26',
+                '2': '#22222e',
+                '3': '#282836',
+                '4': '#2e2e3e',
+              },
+            },
+          },
+        },
+      }
+    </script>
+    <style>
+      /*
+       * 3D Surface System
+       *
+       * Light source: top-left, angled down (~45deg azimuth, ~30deg altitude)
+       * Each nesting level reduces:
+       *   - shadow depth, spread, and offset
+       *   - border highlight intensity (top + left edges catch light)
+       *   - background contrast against parent
+       *   - perceived elevation / Z-axis lift
+       *
+       * The result: deeper surfaces melt into their parent,
+       * becoming nearly indistinguishable at depth 4+.
+       */
+
+      /* ---- Scene: the 3D world container ---- */
+      .scene {
+        perspective: 1200px;
+        perspective-origin: 30% 20%; /* light comes from top-left */
+      }
+
+      .scene-inner {
+        transform-style: preserve-3d;
+        transform: rotateX(2deg) rotateY(-1deg);
+      }
+
+      /* ---- Surface: the core component ---- */
+      .surface {
+        /* Depth-dependent custom properties (level 0 defaults) */
+        --surface-bg: #16161e;
+        --shadow-offset: 8px;
+        --shadow-blur: 24px;
+        --shadow-spread: -2px;
+        --shadow-color: rgba(0, 0, 0, 0.55);
+        --highlight-top: rgba(255, 255, 255, 0.10);
+        --highlight-left: rgba(255, 255, 255, 0.07);
+        --border-bottom: rgba(0, 0, 0, 0.40);
+        --border-right: rgba(0, 0, 0, 0.30);
+        --z-lift: 0px;
+
+        position: relative;
+        background-color: var(--surface-bg);
+        border-radius: 12px;
+        padding: 1.5rem;
+
+        /* Directional shadow: offset toward bottom-right (away from light) */
+        box-shadow:
+          var(--shadow-offset) var(--shadow-offset) var(--shadow-blur) var(--shadow-spread) var(--shadow-color),
+          /* Subtle inner highlight on the lit edges */
+          inset 1px 1px 0 0 var(--highlight-top),
+          inset 0 1px 0 0 var(--highlight-left);
+
+        /* Directional borders: lit edges bright, shadowed edges dark */
+        border-top: 1px solid var(--highlight-top);
+        border-left: 1px solid var(--highlight-left);
+        border-bottom: 1px solid var(--border-bottom);
+        border-right: 1px solid var(--border-right);
+
+        /* Z-axis lift */
+        transform: translateZ(var(--z-lift));
+        transform-style: preserve-3d;
+
+        /* Smooth transitions for interactive demos */
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+
+      /* ---- Depth 1 ---- */
+      .surface .surface {
+        --surface-bg: #1c1c26;
+        --shadow-offset: 5px;
+        --shadow-blur: 16px;
+        --shadow-spread: -3px;
+        --shadow-color: rgba(0, 0, 0, 0.35);
+        --highlight-top: rgba(255, 255, 255, 0.065);
+        --highlight-left: rgba(255, 255, 255, 0.04);
+        --border-bottom: rgba(0, 0, 0, 0.25);
+        --border-right: rgba(0, 0, 0, 0.18);
+        --z-lift: 0px;
+      }
+
+      /* ---- Depth 2 ---- */
+      .surface .surface .surface {
+        --surface-bg: #22222e;
+        --shadow-offset: 3px;
+        --shadow-blur: 10px;
+        --shadow-spread: -3px;
+        --shadow-color: rgba(0, 0, 0, 0.22);
+        --highlight-top: rgba(255, 255, 255, 0.04);
+        --highlight-left: rgba(255, 255, 255, 0.025);
+        --border-bottom: rgba(0, 0, 0, 0.15);
+        --border-right: rgba(0, 0, 0, 0.10);
+        --z-lift: 0px;
+      }
+
+      /* ---- Depth 3 ---- */
+      .surface .surface .surface .surface {
+        --surface-bg: #282836;
+        --shadow-offset: 1px;
+        --shadow-blur: 4px;
+        --shadow-spread: -2px;
+        --shadow-color: rgba(0, 0, 0, 0.12);
+        --highlight-top: rgba(255, 255, 255, 0.02);
+        --highlight-left: rgba(255, 255, 255, 0.012);
+        --border-bottom: rgba(0, 0, 0, 0.08);
+        --border-right: rgba(0, 0, 0, 0.05);
+        --z-lift: 0px;
+      }
+
+      /* ---- Depth 4+ ---- */
+      .surface .surface .surface .surface .surface {
+        --surface-bg: #2e2e3e;
+        --shadow-offset: 0px;
+        --shadow-blur: 1px;
+        --shadow-spread: 0px;
+        --shadow-color: rgba(0, 0, 0, 0.05);
+        --highlight-top: rgba(255, 255, 255, 0.008);
+        --highlight-left: rgba(255, 255, 255, 0.005);
+        --border-bottom: rgba(0, 0, 0, 0.03);
+        --border-right: rgba(0, 0, 0, 0.02);
+        --z-lift: 0px;
+      }
+
+      /* ---- Light direction indicator ---- */
+      .light-source {
+        position: fixed;
+        top: 2rem;
+        left: 2rem;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: radial-gradient(circle at 40% 35%,
+          #fff 0%,
+          #ffe88a 30%,
+          #ffc72c 60%,
+          rgba(255, 199, 44, 0) 100%
+        );
+        box-shadow:
+          0 0 20px rgba(255, 230, 120, 0.6),
+          0 0 60px rgba(255, 199, 44, 0.3);
+        pointer-events: none;
+        z-index: 100;
+      }
+
+      .light-ray {
+        position: fixed;
+        top: 2rem;
+        left: 2rem;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(
+          ellipse at 0% 0%,
+          rgba(255, 230, 150, 0.04) 0%,
+          transparent 70%
+        );
+        pointer-events: none;
+        z-index: 0;
+      }
+    </style>
+  </head>
+  <body class="bg-scene-base min-h-screen text-gray-300 antialiased">
+
+    <!-- Light source indicator -->
+    <div class="light-source"></div>
+    <div class="light-ray"></div>
+
+    <div class="scene max-w-5xl mx-auto px-6 py-16">
+      <div class="scene-inner">
+
+        <!-- Header -->
+        <header class="mb-12">
+          <h1 class="text-lg font-semibold text-gray-100 tracking-tight mb-1">
+            3D Surface Component
+          </h1>
+          <p class="text-sm text-gray-500">
+            Each nested surface becomes less visually distinct.
+            Light source: top-left. No JavaScript.
+          </p>
+        </header>
+
+        <!-- Demo 1: Progressive nesting -->
+        <section class="mb-16">
+          <h2 class="text-xs font-medium text-gray-500 uppercase tracking-widest mb-4">
+            Nested Depth Progression
+          </h2>
+
+          <div class="surface">
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-xs font-mono text-gray-500">depth: 0</span>
+              <span class="text-xs font-mono text-gray-600">most elevated</span>
+            </div>
+            <p class="text-sm text-gray-400 mb-6">
+              The outermost surface catches the most light. Strong shadow cast to the
+              bottom-right. Bright highlight along the top and left edges.
+            </p>
+
+            <div class="surface">
+              <div class="flex items-center justify-between mb-4">
+                <span class="text-xs font-mono text-gray-500">depth: 1</span>
+                <span class="text-xs font-mono text-gray-600">elevated</span>
+              </div>
+              <p class="text-sm text-gray-400 mb-6">
+                Shadow offset and spread reduced. Border highlights dim.
+                Background shifts slightly lighter to stay readable against parent.
+              </p>
+
+              <div class="surface">
+                <div class="flex items-center justify-between mb-4">
+                  <span class="text-xs font-mono text-gray-500">depth: 2</span>
+                  <span class="text-xs font-mono text-gray-600">resting</span>
+                </div>
+                <p class="text-sm text-gray-400 mb-6">
+                  Shadows are now subtle. The surface is settling
+                  toward the plane of its parent.
+                </p>
+
+                <div class="surface">
+                  <div class="flex items-center justify-between mb-4">
+                    <span class="text-xs font-mono text-gray-500">depth: 3</span>
+                    <span class="text-xs font-mono text-gray-600">receding</span>
+                  </div>
+                  <p class="text-sm text-gray-400 mb-6">
+                    Barely lifted. The border is almost invisible.
+                    Shadow is a whisper.
+                  </p>
+
+                  <div class="surface">
+                    <div class="flex items-center justify-between mb-3">
+                      <span class="text-xs font-mono text-gray-500">depth: 4</span>
+                      <span class="text-xs font-mono text-gray-600">flush</span>
+                    </div>
+                    <p class="text-sm text-gray-500">
+                      Effectively flat. Indistinguishable from the surface below.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Demo 2: Side-by-side depth comparison -->
+        <section class="mb-16">
+          <h2 class="text-xs font-medium text-gray-500 uppercase tracking-widest mb-4">
+            Side-by-Side Comparison
+          </h2>
+          <div class="grid grid-cols-5 gap-4">
+            <!-- Depth 0 -->
+            <div class="surface flex flex-col items-center justify-center min-h-[120px]">
+              <span class="text-2xl font-light text-gray-400">0</span>
+              <span class="text-[10px] text-gray-600 mt-1">depth</span>
+            </div>
+            <!-- Depth 1 wrapper -->
+            <div class="surface p-0">
+              <div class="surface flex flex-col items-center justify-center min-h-[120px] rounded-xl">
+                <span class="text-2xl font-light text-gray-400">1</span>
+                <span class="text-[10px] text-gray-600 mt-1">depth</span>
+              </div>
+            </div>
+            <!-- Depth 2 wrapper -->
+            <div class="surface p-0"><div class="surface p-0">
+              <div class="surface flex flex-col items-center justify-center min-h-[120px] rounded-xl">
+                <span class="text-2xl font-light text-gray-400">2</span>
+                <span class="text-[10px] text-gray-600 mt-1">depth</span>
+              </div>
+            </div></div>
+            <!-- Depth 3 wrapper -->
+            <div class="surface p-0"><div class="surface p-0"><div class="surface p-0">
+              <div class="surface flex flex-col items-center justify-center min-h-[120px] rounded-xl">
+                <span class="text-2xl font-light text-gray-400">3</span>
+                <span class="text-[10px] text-gray-600 mt-1">depth</span>
+              </div>
+            </div></div></div>
+            <!-- Depth 4 wrapper -->
+            <div class="surface p-0"><div class="surface p-0"><div class="surface p-0"><div class="surface p-0">
+              <div class="surface flex flex-col items-center justify-center min-h-[120px] rounded-xl">
+                <span class="text-2xl font-light text-gray-400">4</span>
+                <span class="text-[10px] text-gray-600 mt-1">depth</span>
+              </div>
+            </div></div></div></div>
+          </div>
+        </section>
+
+        <!-- Demo 3: Realistic UI layout -->
+        <section class="mb-16">
+          <h2 class="text-xs font-medium text-gray-500 uppercase tracking-widest mb-4">
+            Realistic Layout
+          </h2>
+
+          <div class="surface">
+            <div class="flex items-center gap-3 mb-6">
+              <div class="w-8 h-8 rounded-full bg-indigo-500/20 border border-indigo-500/30"></div>
+              <div>
+                <div class="text-sm font-medium text-gray-200">Dashboard</div>
+                <div class="text-xs text-gray-500">Application shell at depth 0</div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-4">
+              <!-- Card 1 -->
+              <div class="surface">
+                <div class="text-xs font-medium text-gray-300 mb-3">Metrics</div>
+                <div class="surface">
+                  <div class="text-2xl font-light text-gray-200 mb-1">2,847</div>
+                  <div class="text-[10px] text-gray-500 uppercase tracking-wider">Active users</div>
+                </div>
+                <div class="surface mt-3">
+                  <div class="text-2xl font-light text-gray-200 mb-1">94.2%</div>
+                  <div class="text-[10px] text-gray-500 uppercase tracking-wider">Uptime</div>
+                </div>
+              </div>
+
+              <!-- Card 2 -->
+              <div class="surface col-span-2">
+                <div class="text-xs font-medium text-gray-300 mb-3">Activity Feed</div>
+                <div class="space-y-2">
+                  <div class="surface flex items-center gap-3 py-2">
+                    <div class="w-2 h-2 rounded-full bg-emerald-400/60"></div>
+                    <span class="text-xs text-gray-400">Deployment completed</span>
+                    <span class="text-[10px] text-gray-600 ml-auto">2m ago</span>
+                  </div>
+                  <div class="surface flex items-center gap-3 py-2">
+                    <div class="w-2 h-2 rounded-full bg-amber-400/60"></div>
+                    <span class="text-xs text-gray-400">Warning: High memory usage</span>
+                    <span class="text-[10px] text-gray-600 ml-auto">8m ago</span>
+                  </div>
+                  <div class="surface flex items-center gap-3 py-2">
+                    <div class="w-2 h-2 rounded-full bg-sky-400/60"></div>
+                    <span class="text-xs text-gray-400">New user registered</span>
+                    <span class="text-[10px] text-gray-600 ml-auto">14m ago</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Demo 4: The light-direction proof -->
+        <section>
+          <h2 class="text-xs font-medium text-gray-500 uppercase tracking-widest mb-4">
+            Light &amp; Shadow Anatomy
+          </h2>
+          <div class="grid grid-cols-2 gap-6">
+            <div class="surface">
+              <div class="text-xs text-gray-500 mb-4 font-mono">Lit edges (top, left)</div>
+              <div class="flex gap-4">
+                <div class="flex-1 h-24 rounded-lg"
+                     style="border-top: 2px solid rgba(255,255,255,0.12);
+                            border-left: 2px solid rgba(255,255,255,0.08);
+                            border-bottom: 1px solid rgba(0,0,0,0.3);
+                            border-right: 1px solid rgba(0,0,0,0.2);
+                            background: #1a1a24;">
+                </div>
+                <div class="flex flex-col justify-center text-[10px] text-gray-600 space-y-1">
+                  <span>top: bright highlight</span>
+                  <span>left: softer highlight</span>
+                  <span>bottom: dark edge</span>
+                  <span>right: medium shadow</span>
+                </div>
+              </div>
+            </div>
+            <div class="surface">
+              <div class="text-xs text-gray-500 mb-4 font-mono">Shadow cast direction</div>
+              <div class="flex gap-4">
+                <div class="flex-1 h-24 rounded-lg bg-scene-1"
+                     style="box-shadow: 8px 8px 24px -2px rgba(0,0,0,0.55);">
+                </div>
+                <div class="flex flex-col justify-center text-[10px] text-gray-600 space-y-1">
+                  <span>offset-x: +8px (right)</span>
+                  <span>offset-y: +8px (down)</span>
+                  <span>Light is top-left,</span>
+                  <span>shadow falls bottom-right</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </body>
+</html>
